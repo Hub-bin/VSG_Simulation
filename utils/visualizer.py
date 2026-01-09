@@ -88,3 +88,50 @@ def plot_parametric_sweep(t, results_dict, config):
 
     plt.tight_layout()
     plt.show()
+
+
+def plot_voltage_control(t, result, config):
+    delta = result[:, 0]
+    omega = result[:, 1]
+    V_vsg = result[:, 2]  # 3번째 변수: VSG 전압
+
+    # V_grid 재구성 (그래프용)
+    V_grid_arr = np.where(
+        t >= config.event_time, config.V_grid_fault, config.V_grid_normal
+    )
+
+    # 무효 전력(Q) 역산
+    Q_out = (V_vsg**2 / config.X_line) - (V_vsg * V_grid_arr / config.X_line) * np.cos(
+        delta
+    )
+
+    plt.figure(figsize=(12, 10))
+
+    # 1. 전압 반응 (가장 중요)
+    plt.subplot(3, 1, 1)
+    plt.plot(t, V_vsg, "b", linewidth=2, label="VSG Voltage (Controlled)")
+    plt.plot(t, V_grid_arr, "r--", label="Grid Voltage (Disturbance)")
+    plt.title("Voltage Support Capability (AVR)", fontsize=14)
+    plt.ylabel("Voltage [p.u.]")
+    plt.legend(loc="right")
+    plt.grid(True)
+
+    # 2. 무효 전력 공급 (Q)
+    plt.subplot(3, 1, 2)
+    plt.plot(t, Q_out, "g", linewidth=2, label="Reactive Power Injection (Q)")
+    plt.axvline(x=config.event_time, color="r", linestyle="--")
+    plt.title("Reactive Power Response (Q-V Droop)", fontsize=14)
+    plt.ylabel("Reactive Power [p.u.]")
+    plt.legend()
+    plt.grid(True)
+
+    # 3. 주파수 (부수적 영향)
+    plt.subplot(3, 1, 3)
+    plt.plot(t, omega / (2 * np.pi), "k", label="Frequency")
+    plt.title("Frequency Stability", fontsize=14)
+    plt.ylabel("Hz")
+    plt.xlabel("Time [s]")
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.show()
