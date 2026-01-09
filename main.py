@@ -1,31 +1,32 @@
 # main.py
 import numpy as np
-from scipy.integrate import odeint
 from config import Config
-from models.avm_system import voltage_dynamics  # 변경됨
-from utils.visualizer import plot_voltage_control  # 변경됨
+
+# 새로 만든 모듈 import
+from models.stability_analyzer import plot_stability_region
 
 
 def main():
-    print("=== VSG Simulation Step 6: Voltage Control (AVR & Q-V Droop) ===")
+    print("=== VSG Simulation Step 7: Stability Region Analysis ===")
+
+    # 설정 로드
     cfg = Config()
 
-    # 1. 초기 상태 설정
-    # V_vsg 초기값은 1.0이라고 가정
-    # P = V*V/X * sin(delta) -> delta 역산 (V=1.0 가정)
-    P_max = 1.0 * 1.0 / cfg.X_line
-    delta_0 = np.arcsin(cfg.P_ref / P_max)
+    # [사용자 설정 테스트]
+    # 여기서 값을 바꿔보며 그래프 상의 위치 변화를 확인하세요.
+    # Case 1: 안정적인 상황 (기본값) -> X=0.5, P=0.5
+    cfg.X_line = 0.5
+    cfg.P_ref = 0.5
 
-    # 초기 상태 벡터: [delta, omega, V_vsg]
-    y0 = [delta_0, cfg.Omega_0, 1.0]
+    # Case 2: 매우 약한 전력망에서 무리하게 전력을 보내는 상황 (테스트용)
+    # 아래 주석을 풀고 실행해보세요. 점이 빨간색 영역(불안정)으로 넘어갑니다.
+    # cfg.X_line = 1.2  # 아주 약한 전력망
+    # cfg.P_ref = 1.0   # 높은 전력 전송 시도
 
-    # 2. 시뮬레이션
-    t = np.linspace(cfg.t_start, cfg.t_end, cfg.steps)
-    sol = odeint(voltage_dynamics, y0, t, args=(cfg,))
+    # 안정도 지도 그리기
+    plot_stability_region(cfg)
 
-    # 3. 결과 시각화
-    plot_voltage_control(t, sol, cfg)
-    print("=== Simulation Finished ===")
+    print("=== Analysis Finished ===")
 
 
 if __name__ == "__main__":
